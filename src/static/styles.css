@@ -133,6 +133,13 @@ section h3 {
   transform: scale(1.05);
 }
 
+.remove-participant:focus-visible {
+  background-color: #fef3f2;
+  outline: 2px solid #b42318;
+  outline-offset: 2px;
+  transform: scale(1.05);
+}
+
 .form-group {
   margin-bottom: 15px;
 }

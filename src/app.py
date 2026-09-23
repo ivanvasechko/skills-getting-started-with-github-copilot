@@ -95,14 +95,14 @@ def get_activities():
 @app.post("/activities/{activity_name}/signup")
 def signup_for_activity(activity_name: str, email: str):
     """Sign up a student for an activity"""
-    # Validate activity exists
-    if activity_name not in activities:
-        raise HTTPException(status_code=404, detail="Activity not found")
-
-    # Get the specific activity
-    activity = activities[activity_name]
-
     with activity_participants_lock:
+        # Validate activity exists
+        if activity_name not in activities:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        # Get the specific activity
+        activity = activities[activity_name]
+
         # Validate student is not already signed up
         if email in activity["participants"]:
             raise HTTPException(status_code=400, detail="Student already signed up for this activity")
@@ -115,12 +115,12 @@ def signup_for_activity(activity_name: str, email: str):
 @app.delete("/activities/{activity_name}/participants/{email}")
 def unregister_participant(activity_name: str, email: str):
     """Remove a student from an activity."""
-    if activity_name not in activities:
-        raise HTTPException(status_code=404, detail="Activity not found")
-
-    activity = activities[activity_name]
-
     with activity_participants_lock:
+        if activity_name not in activities:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        activity = activities[activity_name]
+
         if email not in activity["participants"]:
             raise HTTPException(status_code=404, detail="Participant not found in this activity")
 
