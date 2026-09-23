@@ -4,6 +4,49 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+  function createLabeledParagraph(label, value) {
+    const paragraph = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = `${label}:`;
+    paragraph.append(strong, ` ${value}`);
+    return paragraph;
+  }
+
+  function createParticipantList(participants, activityName) {
+    const participantsList = document.createElement("ul");
+    participantsList.className = "participants-list";
+
+    if (!participants.length) {
+      const emptyParticipant = document.createElement("li");
+      emptyParticipant.className = "participant-item empty";
+      emptyParticipant.textContent = "No participants yet";
+      participantsList.appendChild(emptyParticipant);
+      return participantsList;
+    }
+
+    participants.forEach((email) => {
+      const participantItem = document.createElement("li");
+      participantItem.className = "participant-item";
+
+      const participantEmail = document.createElement("span");
+      participantEmail.textContent = email;
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "remove-participant";
+      removeButton.dataset.activity = activityName;
+      removeButton.dataset.email = email;
+      removeButton.setAttribute("aria-label", `Remove ${email} from ${activityName}`);
+      removeButton.title = "Remove participant";
+      removeButton.textContent = "🗑️";
+
+      participantItem.append(participantEmail, removeButton);
+      participantsList.appendChild(participantItem);
+    });
+
+    return participantsList;
+  }
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
@@ -20,40 +63,36 @@ document.addEventListener("DOMContentLoaded", () => {
         activityCard.className = "activity-card";
 
         const spotsLeft = details.max_participants - details.participants.length;
-        const participantList = details.participants.length
-          ? details.participants
-              .map(
-                (email) => `
-                  <li class="participant-item">
-                    <span>${email}</span>
-                    <button
-                      type="button"
-                      class="remove-participant"
-                      data-activity="${name}"
-                      data-email="${email}"
-                      aria-label="Remove ${email} from ${name}"
-                      title="Remove participant"
-                    >
-                      🗑️
-                    </button>
-                  </li>
-                `
-              )
-              .join("")
-          : "<li class=\"participant-item empty\">No participants yet</li>";
+        const activityHeading = document.createElement("h4");
+        activityHeading.textContent = name;
 
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-          <div class="participants">
-            <h5>Participants</h5>
-            <ul class="participants-list">
-              ${participantList}
-            </ul>
-          </div>
-        `;
+        const activityDescription = document.createElement("p");
+        activityDescription.textContent = details.description;
+
+        const activitySchedule = createLabeledParagraph("Schedule", details.schedule);
+        const activityAvailability = createLabeledParagraph(
+          "Availability",
+          `${spotsLeft} spots left`
+        );
+
+        const participantsSection = document.createElement("div");
+        participantsSection.className = "participants";
+
+        const participantsHeading = document.createElement("h5");
+        participantsHeading.textContent = "Participants";
+
+        participantsSection.append(
+          participantsHeading,
+          createParticipantList(details.participants, name)
+        );
+
+        activityCard.append(
+          activityHeading,
+          activityDescription,
+          activitySchedule,
+          activityAvailability,
+          participantsSection
+        );
 
         activitiesList.appendChild(activityCard);
 

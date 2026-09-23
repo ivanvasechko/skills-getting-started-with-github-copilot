@@ -1,4 +1,9 @@
-from src.app import activities
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
+
+from fastapi.testclient import TestClient
+
+from src.app import activities, app
 
 
 def test_signup_adds_participant(client):
@@ -39,3 +44,23 @@ def test_signup_unknown_activity_returns_404(client):
     # Assert
     assert response.status_code == 404
     assert response.json()["detail"] == "Activity not found"
+
+
+def test_signup_duplicate_participant_is_atomic():
+    # Arrange
+    activity_name = "Soccer Club"
+    email = "race@mergington.edu"
+    barrier = Barrier(2)
+
+    def signup():
+        with TestClient(app) as test_client:
+            barrier.wait()
+            return test_client.post(f"/activities/{activity_name}/signup", params={"email": email})
+
+    # Act
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        responses = [future.result() for future in [executor.submit(signup), executor.submit(signup)]]
+
+    # Assert
+    assert sorted(response.status_code for response in responses) == [200, 400]
+    assert activities[activity_name]["participants"].count(email) == 1
